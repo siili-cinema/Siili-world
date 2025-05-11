@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Siili’s world</title>
-    <link rel="icon" href="images/calm.png" type="image/png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Kufam:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="images/calm.png" type="image/png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Kufam:wght@400;500&display=swap" rel="stylesheet" />
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -226,7 +226,7 @@
 </head>
 <body>
     <header>
-        <img src="images/logo.png" class="logo" alt="Logo">
+        <img src="images/logo.png" class="logo" alt="Logo" />
         <h1>Siili’s world</h1>
         <br><br>
         <button id="playToggle"><i class="fa-solid fa-play"></i> دەستپێکردن</button>
@@ -245,7 +245,7 @@
         <span>@siili_cinema</span>
     </a>
 
-     <script>
+    <script>
         const soundData = [
             { name: 'باران', icon: 'fa-cloud-rain', file: 'rain.mp3' },
             { name: 'شەپۆل', icon: 'fa-water', file: 'waves.mp3' },
@@ -258,20 +258,17 @@
         let audioContext;
         let isPlaying = false;
         const audioElements = new Map();
-        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
         const createAudioElement = (file) => {
-            const audio = new Audio(`sounds/${file}`);
+            const audio = new Audio(sounds/${file});
             audio.loop = true;
             audio.volume = 0.5;
-            
-            // iOS specific setup
-            if(isIOS) {
+            if (isIOS) {
                 audio.preload = 'none';
                 audio.autoplay = false;
                 audio.playsInline = true;
             }
-            
             return audio;
         };
 
@@ -282,18 +279,17 @@
             soundData.forEach(({ name, icon, file }) => {
                 const card = document.createElement('div');
                 card.className = 'sound-card';
-                card.innerHTML = `
+                card.innerHTML = 
                     <i class="sound-icon fa-solid ${icon}"></i>
                     <div class="sound-name">${name}</div>
                     <input type="range" min="0" max="1" step="0.01" value="0.5" 
-                           class="sound-slider" data-sound="${name}" />
-                `;
+                        class="sound-slider" data-sound="${name}" />
+                ;
 
                 const slider = card.querySelector('.sound-slider');
-                
-                // Create audio element when slider is touched (iOS fix)
+
                 slider.addEventListener('touchstart', () => {
-                    if(!audioElements.has(name)) {
+                    if (!audioElements.has(name)) {
                         const audio = createAudioElement(file);
                         audioElements.set(name, audio);
                     }
@@ -301,11 +297,9 @@
 
                 slider.addEventListener('input', (e) => {
                     const audio = audioElements.get(name);
-                    if(audio) {
+                    if (audio) {
                         audio.volume = parseFloat(e.target.value);
-                        
-                        // iOS volume change requires playing state
-                        if(isIOS && !audio.paused) {
+                        if (isIOS && !audio.paused) {
                             audio.pause();
                             audio.play();
                         }
@@ -314,53 +308,48 @@
 
                 container.appendChild(card);
             });
-
-            // Keep theme toggle code same as before
         };
 
-        document.getElementById('playToggle').addEventListener('click', async () => {
-            try {
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('playToggle').addEventListener('click', () => {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+a7acr x, [5/11/2025 7:29 PM]
+if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            isPlaying = !isPlaying;
+
+            const playButton = document.getElementById('playToggle');
+            playButton.innerHTML = isPlaying
+                ? '<i class="fa-solid fa-pause"></i> وەستاندن'
+                : '<i class="fa-solid fa-play"></i> دەستپێکردن';
+
+            // Initialize all audio elements
+            soundData.forEach(({ name, file }) => {
+                if (!audioElements.has(name)) {
+                    const audio = createAudioElement(file);
+                    audioElements.set(name, audio);
                 }
+            });
 
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
-
-                isPlaying = !isPlaying;
-                const playButton = document.getElementById('playToggle');
-                playButton.innerHTML = isPlaying 
-                    ? '<i class="fa-solid fa-pause"></i> وەستاندن' 
-                    : '<i class="fa-solid fa-play"></i> دەستپێکردن';
-
-                // Initialize all audio elements if not exists
-                soundData.forEach(({ name, file }) => {
-                    if(!audioElements.has(name)) {
-                        const audio = createAudioElement(file);
-                        audioElements.set(name, audio);
-                    }
-                });
-
-                // Handle playback
-                for (const [name, audio] of audioElements) {
-                    if (isPlaying) {
-                        // iOS requires explicit user action for audio start
+            // Immediately play or pause audio elements
+            for (const [name, audio] of audioElements) {
+                if (isPlaying) {
+                    try {
                         audio.currentTime = 0;
-                        await audio.play().catch(e => console.error('Play error:', e));
-                        
-                        // iOS background audio fix
-                        if(isIOS) {
-                            audio.pause();
-                            await audio.play();
+                        const promise = audio.play();
+                        if (promise !== undefined) {
+                            promise.catch(err => console.warn(${name} play error:, err));
                         }
-                    } else {
-                        audio.pause();
+                    } catch (err) {
+                        console.warn(${name} error:, err);
                     }
+                } else {
+                    audio.pause();
                 }
-            } catch (error) {
-                console.error('Audio error:', error);
-                alert('تکایە کلیک بکە بۆ دەستپێکردنی دەنگەکان');
             }
         });
 
