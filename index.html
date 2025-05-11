@@ -14,7 +14,7 @@
             --card-bg: #111111;
             --accent-color: #6ab7ff;
             --border-color: rgba(255, 255, 255, 0.15);
-            --gold-color: #742174; /* Gold color */
+            --gold-color: #742174;
         }
 
         [data-theme="light"] {
@@ -43,7 +43,7 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #themeToggle {
+        #themeToggle, #settingsButton {
             position: fixed;
             top: 1.5rem;
             left: 1.5rem;
@@ -58,27 +58,7 @@
             transition: all 0.3s ease;
         }
 
-        #settingsButton {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--accent-color);
-            padding: 0.8rem;
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #themeToggle:hover,
-        #settingsButton:hover {
+        #themeToggle:hover, #settingsButton:hover {
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
@@ -92,12 +72,11 @@
             padding: 0 1rem;
         }
 
-        /* Logo styling with a gold background and circular shape */
         .logo {
             width: 80px;
             height: 80px;
             background-color: var(--gold-color);
-            border-radius: 50%; /* Circle */
+            border-radius: 50%;
             margin-right: 15px;
             vertical-align: middle;
         }
@@ -238,8 +217,7 @@
                 width: max-content;
             }
 
-            #themeToggle,
-            #settingsButton {
+            #themeToggle, #settingsButton {
                 top: 1rem;
                 padding: 0.6rem;
             }
