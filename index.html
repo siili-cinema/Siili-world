@@ -303,7 +303,7 @@
         ];
 
         let audioContext;
-        const audioElements = new Map();
+        const soundNodes = new Map();
 
         const initApp = () => {
             const container = document.getElementById('controls');
@@ -323,30 +323,40 @@
 
                 const audio = new Audio(`sounds/${file}`);
                 audio.loop = true;
-                audio.volume = 0.5;
-                audioElements.set(name, { audio, isPlaying: false });
+                let gainNode;
+                let mediaElementSource;
+
+                const setupAudioNodes = () => {
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    if (!mediaElementSource) {
+                        mediaElementSource = audioContext.createMediaElementSource(audio);
+                        gainNode = audioContext.createGain();
+                        mediaElementSource.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                    }
+                };
+
+                soundNodes.set(name, { audio, gainNode, mediaElementSource });
 
                 const slider = card.querySelector('.sound-slider');
                 const playButton = card.querySelector('.play-button');
 
                 slider.addEventListener('input', (e) => {
-                    audio.volume = parseFloat(e.target.value);
+                    if (!gainNode) setupAudioNodes();
+                    gainNode.gain.value = parseFloat(e.target.value);
                 });
 
                 playButton.addEventListener('click', async () => {
                     try {
-                        if (!audioContext) {
-                            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        }
-
+                        setupAudioNodes();
+                        
                         if (audioContext.state === 'suspended') {
                             await audioContext.resume();
                         }
 
-                        const soundState = audioElements.get(name);
-                        soundState.isPlaying = !soundState.isPlaying;
-
-                        if (soundState.isPlaying) {
+                        if (audio.paused) {
                             await audio.play();
                             playButton.innerHTML = `<i class="fa-solid fa-pause"></i> وەستاندن`;
                         } else {
@@ -356,14 +366,13 @@
                     } catch (error) {
                         console.error('Playback error:', error);
                         playButton.innerHTML = `<i class="fa-solid fa-play"></i> دەستپێکردن`;
-                        audioElements.get(name).isPlaying = false;
                     }
                 });
 
                 container.appendChild(card);
             });
 
-            // Theme toggle handling (keep existing code)
+            // Theme toggle handling
             const themeToggle = document.getElementById('themeToggle');
             const currentTheme = localStorage.getItem('theme') || 'dark';
             document.body.setAttribute('data-theme', currentTheme);
