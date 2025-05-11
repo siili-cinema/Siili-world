@@ -244,14 +244,39 @@
                 padding: 0.6rem;
             }
         }
+
+        .play-button {
+            background: var(--accent-color);
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            margin-top: 1rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .play-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Remove the global play button styles */
+        #playToggle {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <header>
         <img src="images/logo.png" class="logo" alt="Logo">
         <h1>Siili’s world</h1>
-        <br><br>
-        <button id="playToggle"><i class="fa-solid fa-play"></i> دەستپێکردن</button>
     </header>
 
     <button id="themeToggle"><i class="fas fa-moon"></i></button>
@@ -278,7 +303,6 @@
         ];
 
         let audioContext;
-        let isPlaying = false;
         const audioElements = new Map();
 
         const initApp = () => {
@@ -292,25 +316,54 @@
                     <i class="sound-icon fa-solid ${icon}"></i>
                     <div class="sound-name">${name}</div>
                     <input type="range" min="0" max="1" step="0.01" value="0.5" class="sound-slider" data-sound="${name}" />
+                    <button class="play-button" data-sound="${name}">
+                        <i class="fa-solid fa-play"></i> دەستپێکردن
+                    </button>
                 `;
 
                 const audio = new Audio(`sounds/${file}`);
                 audio.loop = true;
                 audio.volume = 0.5;
-                audioElements.set(name, audio);
+                audioElements.set(name, { audio, isPlaying: false });
 
                 const slider = card.querySelector('.sound-slider');
+                const playButton = card.querySelector('.play-button');
+
                 slider.addEventListener('input', (e) => {
                     audio.volume = parseFloat(e.target.value);
                 });
 
-                slider.addEventListener('change', (e) => {
-                    audio.volume = parseFloat(e.target.value);
+                playButton.addEventListener('click', async () => {
+                    try {
+                        if (!audioContext) {
+                            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        }
+
+                        if (audioContext.state === 'suspended') {
+                            await audioContext.resume();
+                        }
+
+                        const soundState = audioElements.get(name);
+                        soundState.isPlaying = !soundState.isPlaying;
+
+                        if (soundState.isPlaying) {
+                            await audio.play();
+                            playButton.innerHTML = `<i class="fa-solid fa-pause"></i> وەستاندن`;
+                        } else {
+                            audio.pause();
+                            playButton.innerHTML = `<i class="fa-solid fa-play"></i> دەستپێکردن`;
+                        }
+                    } catch (error) {
+                        console.error('Playback error:', error);
+                        playButton.innerHTML = `<i class="fa-solid fa-play"></i> دەستپێکردن`;
+                        audioElements.get(name).isPlaying = false;
+                    }
                 });
 
                 container.appendChild(card);
             });
 
+            // Theme toggle handling (keep existing code)
             const themeToggle = document.getElementById('themeToggle');
             const currentTheme = localStorage.getItem('theme') || 'dark';
             document.body.setAttribute('data-theme', currentTheme);
@@ -321,38 +374,6 @@
                 document.body.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
                 themeToggle.innerHTML = newTheme === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
-            });
-
-            document.getElementById('playToggle').addEventListener('click', async () => {
-                try {
-                    if (!audioContext) {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    }
-
-                    if (audioContext.state === 'suspended') {
-                        await audioContext.resume();
-                    }
-
-                    isPlaying = !isPlaying;
-                    const playButton = document.getElementById('playToggle');
-                    playButton.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i> وەستاندن' : '<i class="fa-solid fa-play"></i> دەستپێکردن';
-
-                    await Promise.all(Array.from(audioElements.values()).map(async (audio) => {
-                        if (isPlaying) {
-                            try {
-                                await audio.play();
-                                audio.volume = parseFloat(audio.volume);
-                            } catch (e) {
-                                console.error('Playback error:', e);
-                            }
-                        } else {
-                            audio.pause();
-                        }
-                    }));
-                } catch (error) {
-                    console.error('Audio error:', error);
-                    alert('تکایە کلیک بکە بۆ دەستپێکردنی دەنگەکان');
-                }
             });
         };
 
