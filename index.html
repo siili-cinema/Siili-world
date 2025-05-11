@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Siili’s world</title>
-    <link rel="icon" href="images/calm.png" type="image/png" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Kufam:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="icon" href="images/calm.png" type="image/png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kufam:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -14,7 +14,7 @@
             --card-bg: #111111;
             --accent-color: #6ab7ff;
             --border-color: rgba(255, 255, 255, 0.15);
-            --gold-color: #742174;
+            --gold-color: #742174; /* Gold color */
         }
 
         [data-theme="light"] {
@@ -43,7 +43,7 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #themeToggle, #settingsButton {
+        #themeToggle {
             position: fixed;
             top: 1.5rem;
             left: 1.5rem;
@@ -58,7 +58,27 @@
             transition: all 0.3s ease;
         }
 
-        #themeToggle:hover, #settingsButton:hover {
+        #settingsButton {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--accent-color);
+            padding: 0.8rem;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #themeToggle:hover,
+        #settingsButton:hover {
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
@@ -72,11 +92,12 @@
             padding: 0 1rem;
         }
 
+        /* Logo styling with a gold background and circular shape */
         .logo {
             width: 80px;
             height: 80px;
             background-color: var(--gold-color);
-            border-radius: 50%;
+            border-radius: 50%; /* Circle */
             margin-right: 15px;
             vertical-align: middle;
         }
@@ -217,7 +238,8 @@
                 width: max-content;
             }
 
-            #themeToggle, #settingsButton {
+            #themeToggle,
+            #settingsButton {
                 top: 1rem;
                 padding: 0.6rem;
             }
@@ -226,7 +248,7 @@
 </head>
 <body>
     <header>
-        <img src="images/logo.png" class="logo" alt="Logo" />
+        <img src="images/logo.png" class="logo" alt="Logo">
         <h1>Siili’s world</h1>
         <br><br>
         <button id="playToggle"><i class="fa-solid fa-play"></i> دەستپێکردن</button>
@@ -258,19 +280,6 @@
         let audioContext;
         let isPlaying = false;
         const audioElements = new Map();
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-        const createAudioElement = (file) => {
-            const audio = new Audio(sounds/${file});
-            audio.loop = true;
-            audio.volume = 0.5;
-            if (isIOS) {
-                audio.preload = 'none';
-                audio.autoplay = false;
-                audio.playsInline = true;
-            }
-            return audio;
-        };
 
         const initApp = () => {
             const container = document.getElementById('controls');
@@ -279,79 +288,73 @@
             soundData.forEach(({ name, icon, file }) => {
                 const card = document.createElement('div');
                 card.className = 'sound-card';
-                card.innerHTML = 
+                card.innerHTML = `
                     <i class="sound-icon fa-solid ${icon}"></i>
                     <div class="sound-name">${name}</div>
-                    <input type="range" min="0" max="1" step="0.01" value="0.5" 
-                        class="sound-slider" data-sound="${name}" />
-                ;
+                    <input type="range" min="0" max="1" step="0.01" value="0.5" class="sound-slider" data-sound="${name}" />
+                `;
+
+                const audio = new Audio(`sounds/${file}`);
+                audio.loop = true;
+                audio.volume = 0.5;
+                audioElements.set(name, audio);
 
                 const slider = card.querySelector('.sound-slider');
-
-                slider.addEventListener('touchstart', () => {
-                    if (!audioElements.has(name)) {
-                        const audio = createAudioElement(file);
-                        audioElements.set(name, audio);
-                    }
+                slider.addEventListener('input', (e) => {
+                    audio.volume = parseFloat(e.target.value);
                 });
 
-                slider.addEventListener('input', (e) => {
-                    const audio = audioElements.get(name);
-                    if (audio) {
-                        audio.volume = parseFloat(e.target.value);
-                        if (isIOS && !audio.paused) {
-                            audio.pause();
-                            audio.play();
-                        }
-                    }
+                slider.addEventListener('change', (e) => {
+                    audio.volume = parseFloat(e.target.value);
                 });
 
                 container.appendChild(card);
             });
-        };
 
-        document.getElementById('playToggle').addEventListener('click', () => {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
+            const themeToggle = document.getElementById('themeToggle');
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            document.body.setAttribute('data-theme', currentTheme);
+            themeToggle.innerHTML = currentTheme === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
 
-a7acr x, [5/11/2025 7:29 PM]
-if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-
-            isPlaying = !isPlaying;
-
-            const playButton = document.getElementById('playToggle');
-            playButton.innerHTML = isPlaying
-                ? '<i class="fa-solid fa-pause"></i> وەستاندن'
-                : '<i class="fa-solid fa-play"></i> دەستپێکردن';
-
-            // Initialize all audio elements
-            soundData.forEach(({ name, file }) => {
-                if (!audioElements.has(name)) {
-                    const audio = createAudioElement(file);
-                    audioElements.set(name, audio);
-                }
+            themeToggle.addEventListener('click', () => {
+                const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.body.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeToggle.innerHTML = newTheme === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
             });
 
-            // Immediately play or pause audio elements
-            for (const [name, audio] of audioElements) {
-                if (isPlaying) {
-                    try {
-                        audio.currentTime = 0;
-                        const promise = audio.play();
-                        if (promise !== undefined) {
-                            promise.catch(err => console.warn(${name} play error:, err));
-                        }
-                    } catch (err) {
-                        console.warn(${name} error:, err);
+            document.getElementById('playToggle').addEventListener('click', async () => {
+                try {
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     }
-                } else {
-                    audio.pause();
+
+                    if (audioContext.state === 'suspended') {
+                        await audioContext.resume();
+                    }
+
+                    isPlaying = !isPlaying;
+                    const playButton = document.getElementById('playToggle');
+                    playButton.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i> وەستاندن' : '<i class="fa-solid fa-play"></i> دەستپێکردن';
+
+                    await Promise.all(Array.from(audioElements.values()).map(async (audio) => {
+                        if (isPlaying) {
+                            try {
+                                await audio.play();
+                                audio.volume = parseFloat(audio.volume);
+                            } catch (e) {
+                                console.error('Playback error:', e);
+                            }
+                        } else {
+                            audio.pause();
+                        }
+                    }));
+                } catch (error) {
+                    console.error('Audio error:', error);
+                    alert('تکایە کلیک بکە بۆ دەستپێکردنی دەنگەکان');
                 }
-            }
-        });
+            });
+        };
 
         window.addEventListener('load', initApp);
     </script>
